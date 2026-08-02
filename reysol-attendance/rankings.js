@@ -149,6 +149,39 @@ function ensureGroupedData(matchIds) {
     });
 }
 
+function parseDate(input) {
+    if (!input) return new Date();
+    if (input instanceof Date) {
+        return isNaN(input.getTime()) ? new Date() : new Date(input.getTime());
+    }
+    if (typeof input === 'number') return new Date(input);
+    const str = String(input).trim();
+
+    if (str.includes('T') || str.includes('Z')) {
+        const d = new Date(str);
+        if (!isNaN(d.getTime())) return d;
+    }
+
+    let d;
+    const matchFull = str.match(/^(\d{4})[-/](\d{1,2})[-/](\d{1,2})$/);
+    if (matchFull) {
+        d = new Date(parseInt(matchFull[1], 10), parseInt(matchFull[2], 10) - 1, parseInt(matchFull[3], 10));
+    } else {
+        const matchMonth = str.match(/^(\d{4})[-/](\d{1,2})$/);
+        if (matchMonth) {
+            d = new Date(parseInt(matchMonth[1], 10), parseInt(matchMonth[2], 10) - 1, 1);
+        } else {
+            d = new Date(str.replace(/-/g, '/'));
+        }
+    }
+
+    if (isNaN(d.getTime())) {
+        console.warn('parseDate failed for:', input);
+        return new Date();
+    }
+    return d;
+}
+
 function normalizeToYYYYMM(dateInput) {
     if (!dateInput) return "";
     const dStr = String(dateInput);
@@ -198,15 +231,82 @@ function setupLeagueSelect() {
         return;
     }
 
-    const currentId = state.selectedLeague ? state.selectedLeague.id : null;
-    leagueSelect.innerHTML = state.leagues.map(l => `<option value="${l.id}">${l.name}</option>`).join('');
+    // Sort leagues by start date descending (newest first)
+    const sortedLeagues = [...state.leagues].sort((a, b) => {
+        const da = parseDate(a.start);
+        const db = parseDate(b.start);
+        return db - da; // Descending
+    });
 
-    if (currentId && state.leagues.find(l => l.id === currentId)) {
-        leagueSelect.value = currentId;
+    leagueSelect.innerHTML = sortedLeagues.map(l => `<option value="${l.id}">${l.name}</option>`).join('');
+
+    const currentId = state.selectedLeague ? state.selectedLeague.id : null;
+    let selectedLeague = null;
+
+    if (currentId && sortedLeagues.find(l => String(l.id) === String(currentId))) {
+        selectedLeague = sortedLeagues.find(l => String(l.id) === String(currentId));
     } else {
-        state.selectedLeague = state.leagues[0];
-        leagueSelect.value = state.selectedLeague.id;
+        const today = new Date();
+
+        // Logic A: Active League (Today inside Start ~ End) and has matches
+        const activeLeague = sortedLeagues.find(l => {
+            const s = parseDate(l.start);
+            s.setHours(0, 0, 0, 0);
+
+            let e = parseDate(l.end);
+            if (l.end && String(l.end).match(/^\d{4}[-/]\d{1,2}$/)) {
+                const d = parseDate(l.end);
+                e = new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59, 999);
+            } else {
+                e.setHours(23, 59, 59, 999);
+            }
+
+            const isWithin = today >= s && today <= e;
+
+            const hasMatches = state.matches && state.matches.some(m => {
+                if (m.leagueId && String(m.leagueId) === String(l.id)) return true;
+                const d = parseDate(m.date);
+                return d >= s && d <= e;
+            });
+
+            return isWithin && hasMatches;
+        });
+
+        if (activeLeague) {
+            selectedLeague = activeLeague;
+        } else {
+            // Logic B: Fallback to Latest Match's League
+            const latestMatch = state.matches && [...state.matches].sort((a, b) => parseDate(b.date) - parseDate(a.date))[0];
+            if (latestMatch) {
+                if (latestMatch.leagueId) {
+                    selectedLeague = sortedLeagues.find(l => String(l.id) === String(latestMatch.leagueId)) || null;
+                }
+                if (!selectedLeague) {
+                    const matchDate = parseDate(latestMatch.date);
+                    selectedLeague = sortedLeagues.find(l => {
+                        const s = parseDate(l.start);
+                        s.setHours(0, 0, 0, 0);
+                        let e = parseDate(l.end);
+                        if (l.end && String(l.end).match(/^\d{4}[-/]\d{1,2}$/)) {
+                            const d = parseDate(l.end);
+                            e = new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59, 999);
+                        } else {
+                            e.setHours(23, 59, 59, 999);
+                        }
+                        return matchDate >= s && matchDate <= e;
+                    });
+                }
+            }
+        }
+
+        // Logic C: Fallback to latest league in sorted array
+        if (!selectedLeague) {
+            selectedLeague = sortedLeagues[0];
+        }
     }
+
+    state.selectedLeague = selectedLeague;
+    leagueSelect.value = selectedLeague ? String(selectedLeague.id) : '';
 }
 
 function setupYearSelectListener() {
