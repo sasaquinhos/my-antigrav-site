@@ -32,7 +32,7 @@ const currentUserSelect = document.getElementById('current-user-select');
 
 // Constants
 const STATUS_OPTIONS = [
-    { id: 1, label: '開場まで' },
+    { id: 1, label: '開場30分前まで' },
     { id: 2, label: '開場後' },
     { id: 3, label: 'キックオフ後' },
     { id: 4, label: '柏熱以外' },
@@ -1157,7 +1157,7 @@ async function submitAttendance(matchId, memberName) {
         }
 
         if (statusVal === null) {
-            alert('出席時の状態（開場まで、開場後など）を選択してください。');
+            alert('出席時の状態（開場30分前まで、開場後など）を選択してください。');
             return;
         }
         
