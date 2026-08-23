@@ -116,6 +116,22 @@ function calculateHomeOpeningTime(kickoffTime) {
     return String(Math.floor(opMin / 60)).padStart(2, '0') + ':' + String(opMin % 60).padStart(2, '0');
 }
 
+// Helper: Update Flag Notice preserving extra custom text
+function updateFlagNoticeText(currentNotice, formattedTime) {
+    const flagPattern = /\d{1,2}:\d{2}～\s*ビッグフラッグ設置実施/;
+    const newFlagText = `${formattedTime}～ ビッグフラッグ設置実施`;
+    
+    if (!currentNotice || !currentNotice.trim()) {
+        return newFlagText;
+    }
+    
+    if (flagPattern.test(currentNotice)) {
+        return currentNotice.replace(flagPattern, newFlagText);
+    } else {
+        return `${newFlagText}\n${currentNotice}`;
+    }
+}
+
 // Initialization
 async function init() {
     console.log('Current API URL:', API_URL);
@@ -1363,7 +1379,7 @@ function setupEventListeners() {
                                 h += 1;
                             }
                             const formattedTime = String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0');
-                            awayNoticeInput.value = `${formattedTime}～ ビッグフラッグ設置実施`;
+                            awayNoticeInput.value = updateFlagNoticeText(awayNoticeInput.value, formattedTime);
                         }
                     }
                 }
@@ -1388,7 +1404,7 @@ function setupEventListeners() {
                                 h += 1;
                             }
                             const formattedTime = String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0');
-                            awayNoticeInput.value = `${formattedTime}～ ビッグフラッグ設置実施`;
+                            awayNoticeInput.value = updateFlagNoticeText(awayNoticeInput.value, formattedTime);
                         }
                     }
                 }
@@ -1458,10 +1474,8 @@ function setupEventListeners() {
                                 h += 1;
                             }
                             const formattedTime = String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0');
-                            awayNoticeInput.value = `${formattedTime}～ ビッグフラッグ設置実施`;
+                            awayNoticeInput.value = updateFlagNoticeText(awayNoticeInput.value, formattedTime);
                         }
-                    } else if (awayNoticeInput) {
-                        awayNoticeInput.value = '';
                     }
                 }
             }
@@ -2001,7 +2015,7 @@ function openEditMatchModal(matchId) {
                 h += 1;
             }
             const formattedTime = String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0');
-            document.getElementById('edit-match-away-notice').value = `${formattedTime}～ ビッグフラッグ設置実施`;
+            document.getElementById('edit-match-away-notice').value = updateFlagNoticeText(document.getElementById('edit-match-away-notice').value, formattedTime);
         }
     }
 
@@ -2058,7 +2072,7 @@ function openEditMatchModal(matchId) {
                             h += 1;
                         }
                         const formattedTime = String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0');
-                        editNoticeInput.value = `${formattedTime}～ ビッグフラッグ設置実施`;
+                        editNoticeInput.value = updateFlagNoticeText(editNoticeInput.value, formattedTime);
                     }
                 }
             }
@@ -2095,7 +2109,7 @@ function openEditMatchModal(matchId) {
                             h += 1;
                         }
                         const formattedTime = String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0');
-                        editNoticeInput.value = `${formattedTime}～ ビッグフラッグ設置実施`;
+                        editNoticeInput.value = updateFlagNoticeText(editNoticeInput.value, formattedTime);
                     }
                 }
             }
@@ -2118,7 +2132,7 @@ function openEditMatchModal(matchId) {
                             h += 1;
                         }
                         const formattedTime = String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0');
-                        editNoticeInput.value = `${formattedTime}～ ビッグフラッグ設置実施`;
+                        editNoticeInput.value = updateFlagNoticeText(editNoticeInput.value, formattedTime);
                     }
                 }
             }
