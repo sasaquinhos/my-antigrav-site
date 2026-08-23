@@ -1370,6 +1370,31 @@ function setupEventListeners() {
             });
         }
 
+        // Manual change Opening Time listener
+        if (newMatchOpeningInput) {
+            newMatchOpeningInput.addEventListener('input', () => {
+                const locRadio = document.querySelector('input[name="new-match-location"]:checked');
+                const loc = locRadio ? locRadio.value : 'home';
+                if (loc === 'home') {
+                    const awayNoticeInput = document.getElementById('new-match-away-notice');
+                    if (awayNoticeInput && newMatchOpeningInput.value) {
+                        const parts = newMatchOpeningInput.value.split(':');
+                        if (parts.length === 2) {
+                            let h = parseInt(parts[0], 10);
+                            let m = parseInt(parts[1], 10);
+                            m += 30;
+                            if (m >= 60) {
+                                m -= 60;
+                                h += 1;
+                            }
+                            const formattedTime = String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0');
+                            awayNoticeInput.value = `${formattedTime}～ ビッグフラッグ設置実施`;
+                        }
+                    }
+                }
+            });
+        }
+
         // Toggle Listeners
         const locationRadios = document.querySelectorAll('input[name="new-match-location"]');
         const awaySeatTypeContainer = document.getElementById('away-seat-type-container');
@@ -1415,12 +1440,9 @@ function setupEventListeners() {
                     const awayNoticeInput = document.getElementById('new-match-away-notice');
                     if (awayNoticeInput) awayNoticeInput.value = '';
                 }
-                
-                if (newMatchOpeningContainer) newMatchOpeningContainer.style.display = 'flex';
             } else {
                 awaySeatTypeContainer.style.display = 'none';
                 awayGeneralDetails.style.display = 'none';
-                if (newMatchOpeningContainer) newMatchOpeningContainer.style.display = 'none';
                 
                 if (isManualChange) {
                     if (newMatchVenueInput) newMatchVenueInput.value = '日立台';
@@ -1443,6 +1465,7 @@ function setupEventListeners() {
                     }
                 }
             }
+            if (newMatchOpeningContainer) newMatchOpeningContainer.style.display = 'flex';
         }
 
         locationRadios.forEach(radio => {
@@ -2015,12 +2038,9 @@ function openEditMatchModal(matchId) {
                 const editNoticeInput = document.getElementById('edit-match-away-notice');
                 if (editNoticeInput) editNoticeInput.value = '';
             }
-            
-            if (editMatchOpeningContainer) editMatchOpeningContainer.style.display = 'flex';
         } else {
             seatContainer.style.display = 'none';
             generalDetails.style.display = 'none';
-            if (editMatchOpeningContainer) editMatchOpeningContainer.style.display = 'none';
             
             if (isManualChange) {
                 if (editMatchVenueInput) {
@@ -2043,6 +2063,7 @@ function openEditMatchModal(matchId) {
                 }
             }
         }
+        if (editMatchOpeningContainer) editMatchOpeningContainer.style.display = 'flex';
 
         document.getElementById('edit-queue-time-container').style.display = queueFlagInput.checked ? 'flex' : 'none';
         document.getElementById('edit-line-org-time-container').style.display = lineOrgFlagInput.checked ? 'flex' : 'none';
@@ -2062,6 +2083,29 @@ function openEditMatchModal(matchId) {
             if (loc === 'home' && editMatchOpeningInput) {
                 editMatchOpeningInput.value = calculateHomeOpeningTime(editMatchKickoffInput.value);
                 
+                const editNoticeInput = document.getElementById('edit-match-away-notice');
+                if (editNoticeInput && editMatchOpeningInput.value) {
+                    const parts = editMatchOpeningInput.value.split(':');
+                    if (parts.length === 2) {
+                        let h = parseInt(parts[0], 10);
+                        let m = parseInt(parts[1], 10);
+                        m += 30;
+                        if (m >= 60) {
+                            m -= 60;
+                            h += 1;
+                        }
+                        const formattedTime = String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0');
+                        editNoticeInput.value = `${formattedTime}～ ビッグフラッグ設置実施`;
+                    }
+                }
+            }
+        };
+    }
+
+    if (editMatchOpeningInput) {
+        editMatchOpeningInput.oninput = () => {
+            const loc = Array.from(locRadios).find(r => r.checked)?.value || 'home';
+            if (loc === 'home') {
                 const editNoticeInput = document.getElementById('edit-match-away-notice');
                 if (editNoticeInput && editMatchOpeningInput.value) {
                     const parts = editMatchOpeningInput.value.split(':');
